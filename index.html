@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>✈️ Prompt Copilot v7.3 | Rex & Pi</title>
+    <title>✈️ Prompt Copilot v7.3.1 | Rex & Pi</title>
     <style>
         :root {
             --primary: #3b82f6;
@@ -60,6 +60,8 @@
         .copy-btn:active { transform: scale(0.98); }
 
         hr { border: 0; border-top: 1px dashed #e2e8f0; margin: 20px 0; }
+        
+        #build-info { font-size: 9px; color: var(--muted); text-align: center; margin-top: 10px; }
 
         @media (max-width: 800px) {
             .main-container { flex-direction: column; }
@@ -70,7 +72,7 @@
 <body>
     <div class="header">
         <div class="header-title">
-            <h1>✈️ Prompt Copilot <span class="version-badge">v7.3 Smart</span></h1>
+            <h1>✈️ Prompt Copilot <span class="version-badge">v7.3.1 Hotfix</span></h1>
             <div class="header-subtitle">Developed by Neurora_AITec Studio</div>
         </div>
         <div style="display:flex; align-items:center;">
@@ -115,10 +117,11 @@
             
             <textarea id="result-text" placeholder="等待設定中..."></textarea>
             
-            <button id="copy-btn" class="copy-btn" onclick="copyToClipboard()">
+            <button id="copy-btn" class="copy-btn" onclick="handleCopy()">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                 <span id="btn-text">複製 Prompt (Copy)</span>
             </button>
+            <div id="build-info">BUILD: 20260205-1320 | 如果按鈕無效請長按文字框全選</div>
         </div>
     </div>
 
@@ -198,17 +201,20 @@
 
         // Initialization
         async function init() {
-            setLang(lang);
-            // setLang already calls loadMasterIndex
+            updateUIText();
+            await loadMasterIndex();
         }
 
         function setLang(l) {
             lang = l;
-            // Update UI Buttons
+            updateUIText();
+            loadMasterIndex();
+        }
+
+        function updateUIText() {
             document.getElementById('lang-zh').classList.toggle('active', lang === 'zh');
             document.getElementById('lang-en').classList.toggle('active', lang === 'en');
             
-            // Update Text
             const t = UI_TEXT[lang];
             document.getElementById('guide-text').innerHTML = t.guide;
             document.getElementById('lbl-config').innerText = t.lbl_config;
@@ -220,11 +226,8 @@
             document.getElementById('lbl-mode').innerText = t.lbl_output_mode;
             document.getElementById('btn-text').innerText = t.btn_copy;
 
-            // Update Mode Dropdown
             const modeSelect = document.getElementById('mode-select');
             modeSelect.innerHTML = t.mode_options.map(o => `<option value="${o[1]}">${o[0]}</option>`).join('');
-            
-            loadMasterIndex();
         }
 
         async function loadMasterIndex() {
@@ -260,15 +263,12 @@
                     roleSelect.innerHTML = roles.map(r => `<option value="${r}">${r}</option>`).join('');
                     onRoleChange();
                 }
-            } catch (e) {
-                console.error("Load library failed", e);
-            }
+            } catch (e) { console.error("Load lib failed", e); }
         }
 
         function onRoleChange() {
             const role = document.getElementById('role-select').value;
             if (!role || !rolesData[role]) return;
-            
             const taskSelect = document.getElementById('task-select');
             const tasks = Object.keys(rolesData[role]);
             taskSelect.innerHTML = tasks.map(t => `<option value="${t}">${t}</option>`).join('');
@@ -279,7 +279,6 @@
             const role = document.getElementById('role-select').value;
             const task = document.getElementById('task-select').value;
             if (!role || !task || !rolesData[role][task]) return;
-            
             renderInputs(rolesData[role][task]);
         }
 
@@ -297,30 +296,20 @@
 
             for (const [k, v] of Object.entries(taskData.vars || {})) {
                 const wrapper = document.createElement('div');
-                
                 if (k.endsWith('__multi') && Array.isArray(v)) {
                     const cleanK = k.replace('__multi', '');
                     wrapper.innerHTML = `<span class="section-label">${cleanK}</span>`;
                     const multiBox = document.createElement('div');
                     multiBox.className = 'multi-select';
-                    
                     inputValues[k] = [v[0]];
-                    
                     v.forEach(opt => {
                         const item = document.createElement('div');
                         item.className = 'item' + (inputValues[k].includes(opt) ? ' active' : '');
                         item.innerHTML = `<input type="checkbox" ${inputValues[k].includes(opt) ? 'checked' : ''}><span>${opt}</span>`;
                         item.onclick = () => {
                             const idx = inputValues[k].indexOf(opt);
-                            if (idx > -1) {
-                                inputValues[k].splice(idx, 1);
-                                item.classList.remove('active');
-                                item.querySelector('input').checked = false;
-                            } else {
-                                inputValues[k].push(opt);
-                                item.classList.add('active');
-                                item.querySelector('input').checked = true;
-                            }
+                            if (idx > -1) { inputValues[k].splice(idx, 1); item.classList.remove('active'); item.querySelector('input').checked = false; }
+                            else { inputValues[k].push(opt); item.classList.add('active'); item.querySelector('input').checked = true; }
                             updateResult();
                         };
                         multiBox.appendChild(item);
@@ -336,9 +325,7 @@
                 } else {
                     wrapper.innerHTML = `<label class="section-label" style="margin-top:0; font-size:10px;">${k}</label>`;
                     const inp = document.createElement('input');
-                    inp.type = 'text';
-                    inp.value = v;
-                    inputValues[k] = v;
+                    inp.type = 'text'; inp.value = v; inputValues[k] = v;
                     inp.oninput = (e) => { inputValues[k] = e.target.value; updateResult(); };
                     wrapper.appendChild(inp);
                 }
@@ -351,33 +338,38 @@
             const role = document.getElementById('role-select').value;
             const task = document.getElementById('task-select').value;
             if (!role || !task || !rolesData[role][task]) return;
-
             let tmpl = rolesData[role][task].template || '';
             const prefix = document.getElementById('mode-select').value;
-
             for (const [k, v] of Object.entries(inputValues)) {
                 const val = Array.isArray(v) ? (v.length ? '\n- ' + v.join('\n- ') : '') : v;
                 tmpl = tmpl.split(`{${k}}`).join(val);
             }
-
             document.getElementById('result-text').value = prefix + tmpl;
         }
 
-        function copyToClipboard() {
+        // --- 核心強效同步複製邏輯 ---
+        function handleCopy() {
             const text = document.getElementById('result-text').value;
             const btn = document.getElementById('copy-btn');
             const btnText = document.getElementById('btn-text');
             const originalText = btnText.innerText;
 
-            // Robust Sync Copy Fallback
+            // 1. 同步建立 TextArea (行動端最相容)
             const textArea = document.createElement("textarea");
             textArea.value = text;
+            // 必須讓元素「大於 1px」且「在螢幕內」但被遮擋，行動端才不會拒絕選取
             textArea.style.position = "fixed";
             textArea.style.left = "0";
             textArea.style.top = "0";
-            textArea.style.opacity = "0.01";
-            textArea.style.width = "1px";
-            textArea.style.height = "1px";
+            textArea.style.width = "200px";
+            textArea.style.height = "200px";
+            textArea.style.padding = "0";
+            textArea.style.border = "none";
+            textArea.style.outline = "none";
+            textArea.style.boxShadow = "none";
+            textArea.style.background = "transparent";
+            textArea.style.color = "transparent";
+            textArea.style.zIndex = "-9999";
             document.body.appendChild(textArea);
             
             textArea.focus();
@@ -387,40 +379,33 @@
             let success = false;
             try {
                 success = document.execCommand('copy');
-            } catch (err) {
-                console.error("execCommand failed", err);
-            }
+            } catch (err) { console.error("execCommand failed", err); }
             document.body.removeChild(textArea);
 
-            if (!success && navigator.clipboard && window.isSecureContext) {
+            // 2. 如果 execCommand 失敗且有現代 API，嘗試現代 API
+            if (!success && navigator.clipboard) {
                 navigator.clipboard.writeText(text).then(() => {
                     showSuccess();
                 }).catch(err => {
                     console.error("Clipboard API failed", err);
-                    showError();
+                    showManualFallback(text);
                 });
-            } else if (success) {
-                showSuccess();
-            } else {
-                showError();
+                return;
             }
+
+            if (success) showSuccess();
+            else showManualFallback(text);
 
             function showSuccess() {
                 btnText.innerText = UI_TEXT[lang].btn_copied;
                 btn.style.background = "#059669";
-                setTimeout(() => {
-                    btnText.innerText = originalText;
-                    btn.style.background = "";
-                }, 2000);
+                setTimeout(() => { btnText.innerText = originalText; btn.style.background = ""; }, 2000);
             }
 
-            function showError() {
-                btnText.innerText = "❌ 複製失敗，請長按文字框";
-                btn.style.background = "#d97706";
-                setTimeout(() => {
-                    btnText.innerText = originalText;
-                    btn.style.background = "";
-                }, 4000);
+            function showManualFallback(val) {
+                // 這是最後的防線：彈出對話框讓使用者手動複製
+                const result = window.prompt("自動複製受限，請複製下方指令：", val);
+                if (result !== null) showSuccess();
             }
         }
 
