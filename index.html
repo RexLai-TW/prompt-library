@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>✈️ Prompt Copilot v7.3 | Rex & Pi</title>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --muted: #64748b;
+            --header-bg: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background-color: var(--bg); color: var(--text); line-height: 1.5; }
+        
+        /* Header */
+        .header { background: var(--header-bg); color: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .header-title { display: flex; flex-direction: column; }
+        .header-title h1 { margin: 0; font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .version-badge { font-size: 12px; background: var(--primary); padding: 2px 8px; border-radius: 4px; opacity: 0.9; }
+        .header-subtitle { font-size: 11px; opacity: 0.8; margin-top: 4px; }
+        
+        .tutorial-btn { background-color: #FF0000; color: white; padding: 6px 14px; border-radius: 20px; text-decoration: none; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; transition: 0.2s; border: 1px solid rgba(255,255,255,0.2); }
+        .tutorial-btn:hover { background-color: #cc0000; transform: translateY(-1px); }
+        .status-badge { font-size: 12px; background: rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 20px; backdrop-filter: blur(4px); margin-left: 12px; }
+
+        /* Main Container */
+        .main-container { max-width: 1200px; margin: 24px auto; display: flex; gap: 24px; padding: 0 20px; flex-wrap: wrap; }
+        .panel { background: var(--card); border-radius: 12px; border: 1px solid #e2e8f0; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .left-panel { flex: 1; min-width: 350px; }
+        .right-panel { flex: 1.2; min-width: 350px; background-color: #f8fafc; }
+
+        /* UI Elements */
+        .lang-toggle { display: flex; gap: 10px; margin-bottom: 20px; }
+        .lang-btn { flex: 1; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: white; cursor: pointer; font-size: 14px; transition: 0.2s; }
+        .lang-btn.active { background: var(--primary); color: white; border-color: var(--primary); font-weight: 600; }
+
+        .guide-box { background: #f0f9ff; padding: 12px 16px; border-radius: 8px; font-size: 13px; color: #0369a1; margin-bottom: 20px; border-left: 4px solid #0ea5e9; display: flex; align-items: center; gap: 10px; }
+        
+        .section-label { font-size: 11px; font-weight: 800; color: #64748b; letter-spacing: 1px; margin-bottom: 12px; text-transform: uppercase; margin-top: 20px; display: block; }
+        
+        select, input[type="text"] { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; font-size: 14px; outline: none; margin-bottom: 12px; transition: 0.2s; }
+        select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        
+        .description-box { color: #64748b; font-size: 13px; margin-bottom: 16px; display: flex; align-items: flex-start; gap: 6px; }
+
+        .multi-select { width: 100%; height: 200px; border: 1px solid #cbd5e1; border-radius: 8px; overflow-y: auto; background: white; margin-bottom: 12px; }
+        .item { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 14px; }
+        .item:hover { background: #f8fafc; }
+        .item.active { background: #eff6ff; color: var(--primary); font-weight: 600; }
+        .item input { width: 16px; height: 16px; accent-color: var(--primary); pointer-events: none; }
+
+        textarea { width: 100%; height: 480px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 14px; line-height: 1.6; resize: none; background: white; margin-top: 8px; }
+
+        .copy-btn { background: var(--primary); color: white; border: none; padding: 16px; border-radius: 8px; font-size: 16px; font-weight: 700; width: 100%; cursor: pointer; transition: 0.3s; margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .copy-btn:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .copy-btn:active { transform: scale(0.98); }
+
+        hr { border: 0; border-top: 1px dashed #e2e8f0; margin: 20px 0; }
+
+        @media (max-width: 800px) {
+            .main-container { flex-direction: column; }
+            .panel { min-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-title">
+            <h1>✈️ Prompt Copilot <span class="version-badge">v7.3 Smart</span></h1>
+            <div class="header-subtitle">Developed by Neurora_AITec Studio</div>
+        </div>
+        <div style="display:flex; align-items:center;">
+            <a href="https://youtu.be/QCm8gAg9vqg?si=Dyoeo-FCNmZ5mWfd" target="_blank" class="tutorial-btn">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                Tutorial
+            </a>
+            <div id="connection-status" class="status-badge">🟡 連線中...</div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <!-- Left Panel -->
+        <div class="panel left-panel">
+            <div class="lang-toggle">
+                <button id="lang-zh" class="lang-btn active" onclick="setLang('zh')">🇹🇼 Taiwan (繁體中文)</button>
+                <button id="lang-en" class="lang-btn" onclick="setLang('en')">🌏 Global (English)</button>
+            </div>
+
+            <div id="guide-text" class="guide-box"></div>
+
+            <span class="section-label" id="lbl-config">CONFIG (設定)</span>
+            <label class="section-label" style="margin-top:0; font-size:10px;" id="lbl-lib">📚 模組庫:</label>
+            <select id="lib-select" onchange="onLibChange()"></select>
+            
+            <label class="section-label" style="margin-top:0; font-size:10px;" id="lbl-role">📂 類別:</label>
+            <select id="role-select" onchange="onRoleChange()"></select>
+            
+            <label class="section-label" style="margin-top:0; font-size:10px;" id="lbl-task">⚡ 任務:</label>
+            <select id="task-select" onchange="onTaskChange()"></select>
+
+            <hr>
+            <span class="section-label" id="lbl-vars">VARIABLES (參數)</span>
+            <div id="vars-container"></div>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="panel right-panel">
+            <span class="section-label" style="margin-top:0;" id="lbl-result">RESULT (結果)</span>
+            <label class="section-label" style="margin-top:0; font-size:10px;" id="lbl-mode">🎛️ 輸出模式:</label>
+            <select id="mode-select" onchange="updateResult()"></select>
+            
+            <textarea id="result-text" placeholder="等待設定中..."></textarea>
+            
+            <button id="copy-btn" class="copy-btn" onclick="copyToClipboard()">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span id="btn-text">複製 Prompt (Copy)</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const INDEX_URLS = {
+            "zh": "https://gist.githubusercontent.com/weihua-studio/051d3a6a6a50ef1690166b9502212c5e/raw/53bac320780be653728e9e5dae0b1369e7e599c5/library_index.json",
+            "en": "https://gist.githubusercontent.com/weihua-studio/07ca630b76a6e93f26367df8112c248f/raw/2434214848fc1dab76fdc36e0d7e143355acdc0c/library_index_GlobalWorld.json"
+        };
+        const FALLBACK_LIBRARIES = {"⚠️ Offline Backup": "https://gist.githubusercontent.com/weihua-wang/raw/prompts.json"};
+
+        const UI_TEXT = {
+            "zh": {
+                "guide": "💡 👈 <b>左側自由探索</b>模組與參數，設定完成後別忘了點擊右側 <b>[複製 Prompt]</b> 帶走你的咒語！",
+                "lbl_lib": "📚 模組庫:", "lbl_role": "📂 類別:", "lbl_task": "⚡ 任務:",
+                "lbl_config": "CONFIG (設定)", "lbl_vars": "VARIABLES (參數)", "lbl_result": "RESULT (結果)",
+                "lbl_output_mode": "🎛️ 輸出模式:", "btn_copy": "複製 Prompt (Copy)", "btn_copied": "已複製! ✅",
+                "status_online": "🟢 連線正常", "status_offline": "🟡 離線模式",
+                "mode_options": [
+                    ["🚀 智能預設 (Auto)", ""],
+                    ["🤫 靜默接收模式 (Silent Ack)", "【系統提示】：請接收以下輸入內容，但【先不要執行】任何任務。你只需要簡單回覆一句『🆗 收到，我已理解您的指令，請輸入 OK 讓我開始執行。』，然後等待使用者的下一個信號。除此之外不要輸出任何其他內容。\n\n----------------\n\n"],
+                    ["🎨 繪圖咒語大師 (Midjourney)", "【系統提示】：請扮演專業的 AI 繪圖詠唱師 (Prompt Engineer)。請根據用戶下方的描述，撰寫給 Midjourney v6 使用的「英文提示詞」。包含：主體、藝術風格、光影、鏡頭角度及長寬比 (--ar)。不需要解釋，直接輸出提示詞即可。\n\n----------------\n\n"],
+                    ["🎬 影片運鏡導演 (Sora/Runway)", "【系統提示】：請扮演專業的 AI 影片導演。請根據用戶需求，撰寫詳細的影片生成提示詞。重點描述：運鏡方式 (Pan, Zoom, Dolly)、光影氛圍、物理動態以及場景連貫性。格式請針對 Runway Gen-2 或 Sora 優化。\n\n----------------\n\n"],
+                    ["🎵 音樂製作人 (Suno/Udio)", "【系統提示】：你現在是 AI 音樂製作人。請撰寫給 Suno 或 Udio 的音樂生成提示詞。請明確指定：音樂流派 (Genre)、情緒氛圍 (Mood)、使用樂器、速度 (BPM) 以及歌詞結構 (Verse/Chorus)。\n\n----------------\n\n"],
+                    ["📝 純文字輸出 (Text Only)", "【系統提示】：系統強制覆寫：輸出結果必須嚴格限制為「純文字」。除非用戶特別要求，否則【禁止】生成圖片、程式碼區塊或呼叫任何多媒體工具。請保持版面乾淨易讀。\n\n----------------\n\n"],
+                    ["🐍 純代碼模式 (Code Only)", "【系統提示】：你現在是一台無情的寫程式機器。針對用戶的問題，【只輸出程式碼區塊】(Python/JS/HTML 等)。不要有任何開場白、結尾、解釋或註解。給我 code 就好。\n\n----------------\n\n"],
+                    ["🐞 除錯醫生 (Bug Fixer)", "【系統提示】：請分析以下程式碼的錯誤 (Bug)。先用簡短的一句話解釋錯誤原因，然後提供【修正後的完整程式碼區塊】。請注重程式的安全性和執行效率。\n\n----------------\n\n"],
+                    ["👶 費曼學習法 (ELI5)", "【系統提示】：請把以下的內容解釋給我聽，假設我是一個只有 5 歲的小朋友。使用簡單的生活譬喻，避免專業術語，語氣要生動有趣。\n\n----------------\n\n"],
+                    ["🧠 深度思考鏈 (CoT)", "【系統提示】：請不要直接給我答案。請使用「思維鏈 (Chain of Thought)」模式，一步一步地思考。將問題拆解，分析利弊，展示你的推論過程，最後再給出結論。\n\n----------------\n\n"],
+                    ["📹 YouTube 腳本 (Script)", "【系統提示】：請根據輸入的主題，撰寫一份高流量的 YouTube 影片腳本。結構需包含：黃金 5 秒開場 (Hook)、前言、三個核心重點段落、以及結尾行動呼籲 (CTA)。語氣要像 YouTuber 一樣口語且有吸引力。\n\n----------------\n\n"],
+                    ["📧 Email 潤飾 (Polish)", "【系統提示】：請將以下草稿潤飾為一封「專業、禮貌且簡潔」的商務電子郵件。修正語法錯誤，並提升整體的專業語氣。\n\n----------------\n\n"],
+                    ["📋 重點摘要 (TL;DR)", "【系統提示】：請閱讀以下內容，並以列點方式 (Bullet points) 提供「重點摘要 (TL;DR)」。只保留最關鍵的資訊，過濾掉廢話。\n\n----------------\n\n"],
+                    ["😈 魔鬼代言人 (Critic)", "【系統提示】：請擔任「魔鬼代言人」的角色。針對以下的觀點或計畫，找出邏輯漏洞、潛在風險或缺點。請毫不留情地進行批判性審查，但要保持建設性。\n\n----------------\n\n"],
+                    ["📊 數據結構化 (JSON)", "【系統提示】：請將以下資訊轉換為標準的 JSON 格式。不要使用 Markdown 或任何對話文字，直接輸出 Raw JSON 數據。\n\n----------------\n\n"],
+                    ["🌍 翻譯蒟蒻 (Translate)", "【系統提示】：請將以下內容翻譯成自然、通順的「台灣繁體中文」。避免使用機器翻譯的生硬語氣，請使用台灣在地的習慣用語。\n\n----------------\n\n"],
+                    ["💡 創意風暴 (Brainstorming)", "【系統提示】：請針對用戶提供的主題，進行腦力激盪。列出 10 個獨特、創新且視角多元的點子。請跳脫框架思考 (Think outside the box)。\n\n----------------\n\n"],
+                    ["🧼 洗稿大師 (Rewrite)", "【系統提示】：請改寫以下文章。保留原本的核心語意，但大幅改變句型結構和用詞，使其成為一篇無法被檢測出重複的原創文章。\n\n----------------\n\n"],
+                    ["🔮 玄學大師 (Mystic)", "【系統提示】：請用玄學、命理或塔羅占卜師的口吻回答以下問題。多使用與星象、命運、能量流動相關的隱喻，讓答案充滿神秘感。\n\n----------------\n\n"],
+                    ["🛌 懶人包教學 (Step-by-Step)", "【系統提示】：請將這項任務拆解為一份簡單易懂的「傻瓜教學」。請使用編號步驟 (Step 1, Step 2...)，並確保每個步驟都具體可行。\n\n----------------\n\n"]
+                ]
+            },
+            "en": {
+                "guide": "💡 👈 <b>Explore</b> the settings on the left, and don't forget to click <b>[Copy Prompt]</b> on the right!",
+                "lbl_lib": "📚 Library:", "lbl_role": "📂 Category:", "lbl_task": "⚡ Task:",
+                "lbl_config": "CONFIG", "lbl_vars": "VARIABLES", "lbl_result": "RESULT",
+                "lbl_output_mode": "🎛️ Output Mode:", "btn_copy": "Copy Prompt", "btn_copied": "Copied! ✅",
+                "status_online": "🟢 Online", "status_offline": "🟡 Offline",
+                "mode_options": [
+                    ["🚀 Auto / Default", ""],
+                    ["🤫 Silent Receiver (Ack Only)", "SYSTEM OVERRIDE: Receive the following input BUT DO NOT EXECUTE IT YET. Simply reply with '🆗 Received. Waiting for your command.' and wait for the user's next signal. Do not output anything else.\n\n----------------\n\n"],
+                    ["🎨 Image Gen Master (Midjourney)", "SYSTEM OVERRIDE: Act as a professional prompt engineer for AI image generators (Midjourney v6). Write a detailed, comma-separated prompt including Subject, Art Style, Lighting, Camera Angle, and Aspect Ratio (--ar).\n\n----------------\n\n"],
+                    ["🎬 Video Director (Sora/Runway)", "SYSTEM OVERRIDE: Act as a professional AI video director. Write a detailed video generation prompt focusing on Camera Movement, Lighting, Physics, and Continuity.\n\n----------------\n\n"],
+                    ["🎵 Music Producer (Suno/Udio)", "SYSTEM OVERRIDE: Act as a music prompt specialist. Create a structured prompt for AI music generators specifying: Genre, Mood, Instruments, Tempo, and Lyrics structure.\n\n----------------\n\n"],
+                    ["📝 Text Only Mode", "SYSTEM OVERRIDE: Output must be strictly text only. DO NOT generate images, code blocks, or multimedia tools unless requested.\n\n----------------\n\n"],
+                    ["🐍 Code Generator (No Yapping)", "SYSTEM OVERRIDE: You are a coding machine. Output ONLY the code block to solve the problem. Do not provide explanations or comments. Just the code.\n\n----------------\n\n"],
+                    ["🐞 Bug Fixer (Debug)", "SYSTEM OVERRIDE: Analyze the input code for bugs. Explain the error briefly, then provide the corrected code block.\n\n----------------\n\n"],
+                    ["👶 ELI5 (Simple Logic)", "SYSTEM OVERRIDE: Explain the concept as if I am a 12-year-old beginner. Use simple analogies and avoid jargon.\n\n----------------\n\n"],
+                    ["🧠 Chain of Thought (CoT)", "SYSTEM OVERRIDE: Think step-by-step. Break down the problem, analyze pros and cons, and show your reasoning process.\n\n----------------\n\n"],
+                    ["📹 YouTube Script (Viral)", "SYSTEM OVERRIDE: Write a compelling YouTube video script. Include: Hook, Intro, Main Content, and CTA. Use an engaging tone.\n\n----------------\n\n"],
+                    ["📧 Email Polisher (Professional)", "SYSTEM OVERRIDE: Rewrite the draft into a professional, concise business email. Fix grammar and tone.\n\n----------------\n\n"],
+                    ["📋 TL;DR Summary (Key Points)", "SYSTEM OVERRIDE: Read the content and provide a bulleted summary of the key takeaways.\n\n----------------\n\n"],
+                    ["😈 Devil's Advocate (Critic)", "SYSTEM OVERRIDE: Act as a critical reviewer. Find flaws, logic gaps, or potential risks in the idea. Be harsh but constructive.\n\n----------------\n\n"],
+                    ["📊 JSON Converter (Data)", "SYSTEM OVERRIDE: Convert the information into valid JSON format. Do not add markdown or conversational text, just the data.\n\n----------------\n\n"],
+                    ["🌍 Translate to Chinese (TW)", "SYSTEM OVERRIDE: Translate the following text into natural, fluent Traditional Chinese.\n\n----------------\n\n"],
+                    ["💡 Brainstorming (Ideas)", "SYSTEM OVERRIDE: Generate 10 unique and creative ideas based on the input topic.\n\n----------------\n\n"],
+                    ["🧼 Paraphraser (Rewrite)", "SYSTEM OVERRIDE: Rewrite the text to make it unique while retaining the original meaning.\n\n----------------\n\n"],
+                    ["🔮 Mystic Oracle (Tarot Style)", "SYSTEM OVERRIDE: Answer with a mystical tone, using metaphors related to stars and fate.\n\n----------------\n\n"],
+                    ["🛌 Step-by-Step Guide (How-to)", "SYSTEM OVERRIDE: Break down the task into a numbered, easy-to-follow Step-by-Step guide.\n\n----------------\n\n"]
+                ]
+            }
+        };
+
+        let lang = 'zh';
+        let libraries = {};
+        let currentDB = {};
+        let rolesData = {};
+        let inputValues = {};
+
+        // Initialization
+        async function init() {
+            setLang(lang);
+            // setLang already calls loadMasterIndex
+        }
+
+        function setLang(l) {
+            lang = l;
+            // Update UI Buttons
+            document.getElementById('lang-zh').classList.toggle('active', lang === 'zh');
+            document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+            
+            // Update Text
+            const t = UI_TEXT[lang];
+            document.getElementById('guide-text').innerHTML = t.guide;
+            document.getElementById('lbl-config').innerText = t.lbl_config;
+            document.getElementById('lbl-vars').innerText = t.lbl_vars;
+            document.getElementById('lbl-result').innerText = t.lbl_result;
+            document.getElementById('lbl-lib').innerText = t.lbl_lib;
+            document.getElementById('lbl-role').innerText = t.lbl_role;
+            document.getElementById('lbl-task').innerText = t.lbl_task;
+            document.getElementById('lbl-mode').innerText = t.lbl_output_mode;
+            document.getElementById('btn-text').innerText = t.btn_copy;
+
+            // Update Mode Dropdown
+            const modeSelect = document.getElementById('mode-select');
+            modeSelect.innerHTML = t.mode_options.map(o => `<option value="${o[1]}">${o[0]}</option>`).join('');
+            
+            loadMasterIndex();
+        }
+
+        async function loadMasterIndex() {
+            const url = INDEX_URLS[lang];
+            try {
+                const r = await fetch(`${url}?t=${Date.now()}`);
+                if (r.ok) {
+                    libraries = await r.json();
+                    document.getElementById('connection-status').innerText = UI_TEXT[lang].status_online;
+                } else throw new Error();
+            } catch (e) {
+                libraries = FALLBACK_LIBRARIES;
+                document.getElementById('connection-status').innerText = UI_TEXT[lang].status_offline;
+            }
+
+            const libSelect = document.getElementById('lib-select');
+            libSelect.innerHTML = Object.keys(libraries).map(n => `<option value="${n}">${n}</option>`).join('');
+            onLibChange();
+        }
+
+        async function onLibChange() {
+            const libName = document.getElementById('lib-select').value;
+            if (!libName || !libraries[libName]) return;
+            
+            try {
+                const r = await fetch(`${libraries[libName]}?t=${Date.now()}`);
+                if (r.ok) {
+                    currentDB = await r.json();
+                    rolesData = currentDB.roles || currentDB;
+                    
+                    const roleSelect = document.getElementById('role-select');
+                    const roles = Object.keys(rolesData);
+                    roleSelect.innerHTML = roles.map(r => `<option value="${r}">${r}</option>`).join('');
+                    onRoleChange();
+                }
+            } catch (e) {
+                console.error("Load library failed", e);
+            }
+        }
+
+        function onRoleChange() {
+            const role = document.getElementById('role-select').value;
+            if (!role || !rolesData[role]) return;
+            
+            const taskSelect = document.getElementById('task-select');
+            const tasks = Object.keys(rolesData[role]);
+            taskSelect.innerHTML = tasks.map(t => `<option value="${t}">${t}</option>`).join('');
+            onTaskChange();
+        }
+
+        function onTaskChange() {
+            const role = document.getElementById('role-select').value;
+            const task = document.getElementById('task-select').value;
+            if (!role || !task || !rolesData[role][task]) return;
+            
+            renderInputs(rolesData[role][task]);
+        }
+
+        function renderInputs(taskData) {
+            const container = document.getElementById('vars-container');
+            container.innerHTML = '';
+            inputValues = {};
+
+            if (taskData.description) {
+                const desc = document.createElement('div');
+                desc.className = 'description-box';
+                desc.innerHTML = `<span>ℹ️</span> <span>${taskData.description}</span>`;
+                container.appendChild(desc);
+            }
+
+            for (const [k, v] of Object.entries(taskData.vars || {})) {
+                const wrapper = document.createElement('div');
+                
+                if (k.endsWith('__multi') && Array.isArray(v)) {
+                    const cleanK = k.replace('__multi', '');
+                    wrapper.innerHTML = `<span class="section-label">${cleanK}</span>`;
+                    const multiBox = document.createElement('div');
+                    multiBox.className = 'multi-select';
+                    
+                    inputValues[k] = [v[0]];
+                    
+                    v.forEach(opt => {
+                        const item = document.createElement('div');
+                        item.className = 'item' + (inputValues[k].includes(opt) ? ' active' : '');
+                        item.innerHTML = `<input type="checkbox" ${inputValues[k].includes(opt) ? 'checked' : ''}><span>${opt}</span>`;
+                        item.onclick = () => {
+                            const idx = inputValues[k].indexOf(opt);
+                            if (idx > -1) {
+                                inputValues[k].splice(idx, 1);
+                                item.classList.remove('active');
+                                item.querySelector('input').checked = false;
+                            } else {
+                                inputValues[k].push(opt);
+                                item.classList.add('active');
+                                item.querySelector('input').checked = true;
+                            }
+                            updateResult();
+                        };
+                        multiBox.appendChild(item);
+                    });
+                    wrapper.appendChild(multiBox);
+                } else if (Array.isArray(v)) {
+                    wrapper.innerHTML = `<label class="section-label" style="margin-top:0; font-size:10px;">${k}</label>`;
+                    const sel = document.createElement('select');
+                    sel.innerHTML = v.map(o => `<option value="${o}">${o}</option>`).join('');
+                    inputValues[k] = v[0];
+                    sel.onchange = (e) => { inputValues[k] = e.target.value; updateResult(); };
+                    wrapper.appendChild(sel);
+                } else {
+                    wrapper.innerHTML = `<label class="section-label" style="margin-top:0; font-size:10px;">${k}</label>`;
+                    const inp = document.createElement('input');
+                    inp.type = 'text';
+                    inp.value = v;
+                    inputValues[k] = v;
+                    inp.oninput = (e) => { inputValues[k] = e.target.value; updateResult(); };
+                    wrapper.appendChild(inp);
+                }
+                container.appendChild(wrapper);
+            }
+            updateResult();
+        }
+
+        function updateResult() {
+            const role = document.getElementById('role-select').value;
+            const task = document.getElementById('task-select').value;
+            if (!role || !task || !rolesData[role][task]) return;
+
+            let tmpl = rolesData[role][task].template || '';
+            const prefix = document.getElementById('mode-select').value;
+
+            for (const [k, v] of Object.entries(inputValues)) {
+                const val = Array.isArray(v) ? (v.length ? '\n- ' + v.join('\n- ') : '') : v;
+                tmpl = tmpl.split(`{${k}}`).join(val);
+            }
+
+            document.getElementById('result-text').value = prefix + tmpl;
+        }
+
+        function copyToClipboard() {
+            const text = document.getElementById('result-text').value;
+            const btn = document.getElementById('copy-btn');
+            const btnText = document.getElementById('btn-text');
+            const originalText = btnText.innerText;
+
+            // Robust Sync Copy Fallback
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.left = "0";
+            textArea.style.top = "0";
+            textArea.style.opacity = "0.01";
+            textArea.style.width = "1px";
+            textArea.style.height = "1px";
+            document.body.appendChild(textArea);
+            
+            textArea.focus();
+            textArea.select();
+            textArea.setSelectionRange(0, 99999);
+
+            let success = false;
+            try {
+                success = document.execCommand('copy');
+            } catch (err) {
+                console.error("execCommand failed", err);
+            }
+            document.body.removeChild(textArea);
+
+            if (!success && navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showSuccess();
+                }).catch(err => {
+                    console.error("Clipboard API failed", err);
+                    showError();
+                });
+            } else if (success) {
+                showSuccess();
+            } else {
+                showError();
+            }
+
+            function showSuccess() {
+                btnText.innerText = UI_TEXT[lang].btn_copied;
+                btn.style.background = "#059669";
+                setTimeout(() => {
+                    btnText.innerText = originalText;
+                    btn.style.background = "";
+                }, 2000);
+            }
+
+            function showError() {
+                btnText.innerText = "❌ 複製失敗，請長按文字框";
+                btn.style.background = "#d97706";
+                setTimeout(() => {
+                    btnText.innerText = originalText;
+                    btn.style.background = "";
+                }, 4000);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
